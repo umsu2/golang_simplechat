@@ -19,7 +19,7 @@ type Message struct {
 }
 
 
-var clients = make(map[*websocket.Conn]bool)
+//var clients = make(map[*websocket.Conn]bool)
 
 //var chatrooms map[string](chan Message)
 
@@ -29,7 +29,7 @@ type chatrooms struct{
 }
 
 var chatroom_singledton = chatrooms{data: make(map[string](chan Message))}
-
+var chatroom_client_singleton = make (map[string] map[*websocket.Conn]bool)
 
 func (r *chatrooms) Set(key string, ch chan Message){
 	r.mux.Lock()
@@ -90,7 +90,8 @@ func handleConnections(w http.ResponseWriter , r *http.Request) {
 		log.Fatal(err)
 	}
 	defer ws.Close()
-	clients[ws] = true // need to have a mapping of rooms to hashmap of sockets. , then iterate through hashmap and call get
+	// map of room -> map
+	//clients[ws] = true // need to have a mapping of rooms to hashmap of sockets. , then iterate through hashmap and call get
 
 	for {
 		var msg Message
@@ -100,22 +101,39 @@ func handleConnections(w http.ResponseWriter , r *http.Request) {
 
 		if err!= nil{
 			log.Printf("error: %v", err)
-			delete(clients, ws)
+
+			deleteClientWSConn(ws)
 			break
 		}
 
-		if msg.Action == "create"{
+		if msg.Action == "create" {
 			chatroom := make(chan Message)
 			(&chatroom_singledton).Set(msg.Chatroom, chatroom)
 			go handleMessagesPerChanel(chatroom)
 
-		} else {
+		} else if msg.Action == "join"{
+
+			_, ok := (&chatroom_singledton).Get(msg.Chatroom)
+			if(ok){ // there exists a chatroom
+
+			chatroom_client_map, ok := chatroom_client_singleton[msg.Chatroom]
+
+			if (!ok){ // there exists a map for that room
+
+				connectionMap := make( map[*websocket.Conn]bool )
+				chatroom_client_singleton[msg.Chatroom] = connectionMap
+				chatroom_client_map = connectionMap
+			}
+			chatroom_client_map[ws] = true
+
+			}
+
+		} else if msg.Action == "message" {
 
 			chatroom, ok := (&chatroom_singledton).Get(msg.Chatroom)
 
 			if(ok){
 				chatroom <-msg
-
 
 			}
 			// else the chat room doesn't exist
@@ -128,22 +146,16 @@ func handleConnections(w http.ResponseWriter , r *http.Request) {
 
 }
 
-//func handleMessages(){
-//	//for {
-//
-//		//msg := <-broadcast
-//
-//		var rooms = chatroom_singledton.GetAll()
-//
-//		for _, room := range rooms{
-//
-//			go handleMessagesPerChanel(room)
-//		}
-//
-//
-//		//}
-//
-//}
+func deleteClientWSConn(conn *websocket.Conn){
+
+	for _, rooms_dict := range chatroom_client_singleton{
+
+		_, ok := rooms_dict[conn]
+		if(ok){
+			delete(rooms_dict,conn)
+		}
+	}
+}
 
 func handleMessagesPerChanel(msgchan chan Message){
 
@@ -151,17 +163,27 @@ func handleMessagesPerChanel(msgchan chan Message){
 	for{
 		msg := <-msgchan
 
-		for client := range clients {
+		room := msg.Chatroom
 
-			err:= client.WriteJSON(msg)
-			if err != nil {
-				log.Printf("error: %v", err)
-				client.Close()
-				delete(clients,client)
+		clients, ok := chatroom_client_singleton[room]
+		if(ok){
+
+
+			for client, _ := range clients {
+
+				err:= client.WriteJSON(msg)
+				if err != nil {
+					log.Printf("error: %v", err)
+					client.Close()
+					deleteClientWSConn(client)
+
+				}
 
 			}
 
 		}
+
+
 	}
 
 

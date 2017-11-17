@@ -7,11 +7,13 @@ new Vue({
             ws: null,
             newMsg: '',
             chatContent: '',
-            chatRoomContent: '',
+            chatRooms: [],
             email: null,
             username: null,
-            currentChatroom: null,
-            joined: false
+            ChatroomName: null,
+            currentChatroom: "",
+            joined: false,
+
 
         },
 
@@ -20,7 +22,7 @@ new Vue({
             var self = this;
 
             self.ws = new WebSocket('ws://localhost:8000/ws');
-            this.ws.addEventListener('message', function (e) {
+            this.ws.addEventListener('message', function (e) {// todo handle multiple type of messages, need message type of "get chat rooms" , so the server pushes the list of rooms to each client
 
                 var msg = JSON.parse(e.data);
                 self.chatContent +=
@@ -42,8 +44,9 @@ new Vue({
                     this.ws.send(
                         JSON.stringify({
                             email: this.email,
+                            action: "message",
                             username: this.username,
-                            chatroom: $('<p>').html(this.currentChatroom).text(),
+                            chatroom: this.currentChatroom,
                             message: $('<p>').html(this.newMsg).text()
                         }));
                     this.newMsg = '';
@@ -51,6 +54,7 @@ new Vue({
             },
 
             join: function () {
+
                 if (!this.email) {
                     Materialize.toast('You must enter an email', 2000);
                     return
@@ -67,25 +71,33 @@ new Vue({
                 this.email = $('<p>').html(this.email).text();
                 this.username = $('<p>').html(this.username).text();
 
+                this.ws.send(
+                    JSON.stringify({
+                        action : 'join',
+                        chatroom : this.currentChatroom,
+
+                    }));
+
+
                 this.joined = true;
             },
 
             createChatroom: function () {
 
-                if (!this.currentChatroom) {
+                var chatroomName = $('<p>').html(this.ChatroomName).text();
+                if (!this.ChatroomName) {
                     Materialize.toast('You must create a chatroom', 2000);
                     return
                 }
-
+                this.chatRooms.push(chatroomName);
                 this.ws.send(
                         JSON.stringify({
-
-
                             action : 'create',
-                            chatroom : $('<p>').html(this.currentChatroom).text()
+                            chatroom : chatroomName,
 
                         }));
-                this.currentChatroom = '';
+                this.ChatroomName = '';
+                Materialize.toast(`You created a chatroom called: '${chatroomName}'`, 2000);
 
 
 

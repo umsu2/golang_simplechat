@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:v-bind="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
     <title>Simple Chat</title>
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.8/css/materialize.min.css">
+    <!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.8/css/materialize.min.css">-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/emojione/2.2.6/assets/css/emojione.min.css"/>
     <link rel="stylesheet" href="style.css">
@@ -15,16 +16,17 @@
 
 <body>
 <header>
-    <nav>
-        <div class="nav-wrapper">
-            <a href="/" class="brand-logo right">Simple Chat</a>
-        </div>
-    </nav>
+
 </header>
 
 
 <main id="app">
 
+    <nav>
+        <div class="nav-wrapper">
+            <a href="/" class="brand-logo right">Current Room: {{currentChatroom}}</a>
+        </div>
+    </nav>
 
     <div class="row">
         <div class="col s8">
@@ -39,10 +41,37 @@
         <div class="col s4">
             <div class="card horizontal">
 
-                <div id="chat-rooms" class="card-content chat-messages" v-html="chatRoomContent">
+                <!--<div id="chat-rooms" class="card-content chat-messages" v-html="chatRoomContent">-->
+
+
+                <!--</div>-->
+                <div>
+
+                    <ul>
+
+                        <li v-for="chatroom in chatRooms">
+                            {{ chatroom }}
+
+                        </li>
+
+                    </ul>
                 </div>
             </div>
+
+            <div class="input-field col s8">
+                <input type="text" v-model.trim="ChatroomName" placeholder="Chatroom">
+            </div>
+
+            <div class="input-field col s4">
+                <button class="waves-effect waves-light btn" @click="createChatroom()">
+                    <i class="material-icons right">done</i>
+                    Create Chatroom
+                </button>
+            </div>
+
         </div>
+
+
 
     </div>
     <div class="row" v-if="joined">
@@ -56,16 +85,31 @@
             </button>
         </div>
     </div>
+
+    </div>
     <div class="row" v-if="!joined">
+
+
+
+
+        <select v-model="currentChatroom"class="browser-default">
+            <option selected value="">Please Select</option>
+
+            <option v-for="option in chatRooms" :value="option">
+                {{ option }}
+            </option>
+        </select>
+
+
         <div class="input-field col s8">
             <input type="email" v-model.trim="email" placeholder="Email">
         </div>
         <div class="input-field col s8">
             <input type="text" v-model.trim="username" placeholder="Username">
         </div>
-        <div class="input-field col s8">
-            <input type="text" v-model.trim="currentChatroom" placeholder="Chatroom">
-        </div>
+
+
+
 
 
         <div class="input-field col s4">
@@ -75,12 +119,19 @@
             </button>
         </div>
 
-        <div class="input-field col s4">
-            <button class="waves-effect waves-light btn" @click="createChatroom()">
-                <i class="material-icons right">done</i>
-                Create Chatroom
-            </button>
-        </div>
+
+
+
+
+        <!--<label>Browser Select</label>-->
+        <!--<select class="browser-default">-->
+            <!--<option value="" disabled selected>Choose your option</option>-->
+            <!--<option value="1">Option 1</option>-->
+            <!--<option value="2">Option 2</option>-->
+            <!--<option value="3">Option 3</option>-->
+        <!--</select>-->
+
+
     </div>
 </main>
 
@@ -92,7 +143,10 @@
 <script src="https://cdn.jsdelivr.net/emojione/2.2.6/lib/js/emojione.min.js"></script>
 <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/md5.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.8/js/materialize.min.js"></script>
+<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.8/js/materialize.min.js"></script>-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
+
+
 <script src="app.js"></script>
 
 </body>
