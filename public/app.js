@@ -22,15 +22,51 @@ new Vue({
             var self = this;
 
             self.ws = new WebSocket('ws://localhost:8000/ws');
+
+            self.ws.addEventListener('open', function () {
+
+                self.ws.send(
+                    JSON.stringify({
+
+                        action: "get",
+                        type: "rooms",
+
+                    }));
+            });
+
             this.ws.addEventListener('message', function (e) {// todo handle multiple type of messages, need message type of "get chat rooms" , so the server pushes the list of rooms to each client
 
+
+
                 var msg = JSON.parse(e.data);
-                self.chatContent +=
 
-                    `<div class="chip">   <img src="${ self.gravatarURL(msg.email) } ">   ${msg.username}     </div>     ${emojione.toImage(msg.message)} <br> `;
+                if(msg.action === "message"){
 
-                var element = document.getElementById('chat-messages');
-                element.scrollTop = element.scrollHeight;
+                    self.chatContent +=
+
+                        `<div class="chip">   <img src="${ self.gravatarURL(msg.email) } ">   ${msg.username}     </div>     ${emojione.toImage(msg.message)} <br> `;
+
+                    var element = document.getElementById('chat-messages');
+                    element.scrollTop = element.scrollHeight;
+                }
+
+                else if (msg.action === "result"){
+                    if (msg.type === "rooms"){
+
+
+                        chatrooms = JSON.parse(msg.message);
+                        self.chatRooms = chatrooms
+                        // for (var index in chatrooms){
+                        //     var chatroomname = chatrooms[index];
+                        //     self.chatRooms.push(chatroomname);
+                        // }
+
+
+                    }
+
+                }
+
+
 
             });
 
@@ -41,6 +77,10 @@ new Vue({
 
             send: function () {
                 if (this.newMsg != '') {
+
+
+
+
                     this.ws.send(
                         JSON.stringify({
                             email: this.email,
