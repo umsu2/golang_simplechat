@@ -21,7 +21,8 @@ new Vue({
 
             var self = this;
 
-            self.ws = new WebSocket('ws://localhost:8000/ws');
+            self.ws = new WebSocket(`ws://${window.location.host}/ws`); // prod
+            // self.ws = new WebSocket('ws://localhost:8080/');//dev
 
             self.ws.addEventListener('open', function () {
 
@@ -129,7 +130,7 @@ new Vue({
                     Materialize.toast('You must create a chatroom', 2000);
                     return
                 }
-                this.chatRooms.push(chatroomName);
+                // this.chatRooms.push(chatroomName);
                 this.ws.send(
                         JSON.stringify({
                             action : 'create',

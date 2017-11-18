@@ -78,10 +78,10 @@ func main() {
 
 	//fs := http.FileServer(http.Dir("../public"))
 	//http.Handle("/",fs)
-	http.HandleFunc("/ws", handleConnections)
+	http.HandleFunc("/", handleConnections)
 	//go handleMessages()
-	log.Println("http server started on :8000")
-	err := http.ListenAndServe(":8000", nil)
+	log.Println("websocket server started on :8080")
+	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 
