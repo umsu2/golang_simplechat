@@ -62,10 +62,10 @@
                 <input type="text" v-model.trim="ChatroomName" placeholder="Chatroom">
             </div>
 
-            <div class="input-field col s4">
+            <div class="input-field col s8">
                 <button class="waves-effect waves-light btn" @click="createChatroom()">
                     <i class="material-icons right">done</i>
-                    Create Chatroom
+                    Create
                 </button>
             </div>
 
@@ -90,16 +90,39 @@
     <div class="row" v-if="!joined">
 
 
-
+        <div class=" col s8">
 
         <select v-model="currentChatroom"class="browser-default">
-            <option selected value="">Please Select</option>
+            <option selected value="">Please select a chatroom here, enter email and username and then click 'Join' </option>
 
             <option v-for="option in chatRooms" :value="option">
                 {{ option }}
             </option>
         </select>
+        </div>
 
+        <div class="col s4">
+            Users in current chatroom: {{currentChatroom}}
+            <div class="card horizontal">
+
+                <!--<div id="chat-rooms" class="card-content chat-messages" v-html="chatRoomContent">-->
+
+
+                <!--</div>-->
+                <div>
+
+                    <ul>
+
+                        <li v-for="user in usersinCurrentRoom">
+                            {{ user }}
+
+                        </li>
+
+                    </ul>
+                </div>
+            </div>
+
+        </div>
 
         <div class="input-field col s8">
             <input type="email" v-model.trim="email" placeholder="Email">
@@ -112,7 +135,7 @@
 
 
 
-        <div class="input-field col s4">
+        <div class="input-field col s8">
             <button class="waves-effect waves-light btn" @click="join()">
                 <i class="material-icons right">done</i>
                 Join

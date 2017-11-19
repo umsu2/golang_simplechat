@@ -8,6 +8,7 @@ new Vue({
             newMsg: '',
             chatContent: '',
             chatRooms: [],
+            usersinCurrentRoom: ["None"],
             email: null,
             username: null,
             ChatroomName: null,

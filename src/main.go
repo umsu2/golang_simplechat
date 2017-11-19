@@ -26,9 +26,16 @@ type chatrooms struct {
 	mux  sync.Mutex
 }
 
-var chatroom_singledton = chatrooms{data: make(map[string](chan Message))}
+type User struct {
+
+	name string `json:"username"`
+	email string `json:"email"`
+	//conn *websocket.Conn
+}
+
+var chatroom_singledton = chatrooms{data: make(map[string](chan Message))} // all these hashmaps can be unified into one
 var chatroom_client_singleton = make(map[string]map[*websocket.Conn]bool)
-var all_client_map = make(map[*websocket.Conn]bool)
+var all_client_map = make(map[*websocket.Conn]*User)
 
 func (r *chatrooms) Set(key string, ch chan Message) {
 	r.mux.Lock()
@@ -97,7 +104,7 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 	}
 	defer ws.Close()
 	// map of room -> map
-	all_client_map[ws] = true
+	all_client_map[ws] = &User{}
 	//clients[ws] = true // need to have a mapping of rooms to hashmap of sockets. , then iterate through hashmap and call get
 
 	for {
@@ -129,7 +136,7 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 				}}
 
 			go handleMessagesPerChanel(chatroom)
-
+			// todo maybe after the user has created the room, force user to join the created room.
 
 
 
@@ -147,7 +154,12 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 					chatroom_client_singleton[msg.Chatroom] = connectionMap
 					chatroom_client_map = connectionMap
 				}
+
+				user,_ := all_client_map[ws]
+				(*user).email = msg.Email
+				(*user).name = msg.Username
 				chatroom_client_map[ws] = true
+
 
 			}
 
@@ -181,7 +193,19 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 				}
 
 
+			} else if msg.Type == "users" { // when client asks for users. or have server push user upon user joining? when user join, server needs to broadcast user to those in that room, so it's server side pushing info
+
+				users_list_in_json, err := json.Marshal(GetAllUsersInRoom(msg.Chatroom));
+
+				if(err==nil){
+					user_list_msg := Message{Action:"result", Type:"users", Message: string(users_list_in_json)}
+
+					go notifyClient(ws, user_list_msg)
+
+				}
+
 			}
+
 
 
 
@@ -190,6 +214,25 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 		//broadcast <- msg
 
 	}
+
+}
+
+func GetAllUsersInRoom(chatroom_name string) []User {
+	chatroom_client_map, ok := chatroom_client_singleton[chatroom_name]
+	list_of_users := make([]User,0)
+	if(ok && len(chatroom_client_map) > 0 ){
+
+
+		 for client , _ :=  range chatroom_client_map{
+			 userptr, _ := all_client_map[client] // clients should be in the overall hashmap
+			 list_of_users = append(list_of_users,*userptr)
+		}
+
+		//for each client in that particular room , look up its user obj, return as list
+
+	}
+	return list_of_users
+
 
 }
 

@@ -21,6 +21,8 @@ functionalities:
 - easier emoji access, user can see all available emojis
 - a user list, where the chatroom shows who is inside the room
 - private msg between users
+- once ws timeouts, indicate timeout and button to reconnect
+
 
 deployment:
 - git commit triggers build.
