@@ -14,15 +14,13 @@ new Vue({
             currentChatroom: "",
             joined: false,
 
-
         },
 
         created: function () {
 
             var self = this;
 
-            self.ws = new WebSocket(`ws://${window.location.host}/ws`); // prod
-            // self.ws = new WebSocket('ws://localhost:8080/');//dev
+            self.ws = new WebSocket(`ws://${window.location.hostname}/ws`);
 
             self.ws.addEventListener('open', function () {
 
@@ -35,7 +33,7 @@ new Vue({
                     }));
             });
 
-            this.ws.addEventListener('message', function (e) {// todo handle multiple type of messages, need message type of "get chat rooms" , so the server pushes the list of rooms to each client
+            this.ws.addEventListener('message', function (e) {
 
 
 
@@ -54,15 +52,8 @@ new Vue({
                 else if (msg.action === "result"){
                     if (msg.type === "rooms"){
 
-
                         chatrooms = JSON.parse(msg.message);
                         self.chatRooms = chatrooms
-                        // for (var index in chatrooms){
-                        //     var chatroomname = chatrooms[index];
-                        //     self.chatRooms.push(chatroomname);
-                        // }
-
-
                     }
 
                 }
@@ -78,10 +69,6 @@ new Vue({
 
             send: function () {
                 if (this.newMsg != '') {
-
-
-
-
                     this.ws.send(
                         JSON.stringify({
                             email: this.email,
