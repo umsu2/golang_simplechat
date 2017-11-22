@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 )
 
+const PUBLICROOM string =  "PUBLIC"
 type Message struct {
 	Email    string `json:"email"`
 	Username string `json:"username"`
@@ -28,8 +29,8 @@ type chatrooms struct {
 
 type User struct {
 
-	name string `json:"username"`
-	email string `json:"email"`
+	Name 	string `json:"username"`
+	Email 	string `json:"email"`
 	//conn *websocket.Conn
 }
 
@@ -88,12 +89,109 @@ func main() {
 	http.HandleFunc("/", handleConnections)
 	//go handleMessages()
 	log.Println("websocket server started on :8080")
+	createPublicChatroom()
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 
 	}
+	//creates the public chatroom where all users start off with
 
+
+
+}
+
+func createChatRoom(chatroom_name string) (chan Message , bool) {
+
+	_, room_exists := (&chatroom_singledton).Get(chatroom_name)
+	if room_exists{
+		// todo return msg, saying room exists cannot overwrite.
+		return nil, false
+	}
+	// if doesn't exist, create room and run the goroutine to handle future room access
+	chatroom := make(chan Message)
+	(&chatroom_singledton).Set(chatroom_name, chatroom)
+
+
+	_, ok := (&chatroom_singledton).Get(chatroom_name)
+
+
+	//creates map to hold the ws connections for that room. and auto joins
+	if (ok) { // there exists a chatroom
+
+		_, ok := chatroom_client_singleton[chatroom_name]
+
+		if (!ok) { // there exists a map for that room
+
+			connectionMap := make(map[*websocket.Conn]bool)
+			chatroom_client_singleton[chatroom_name] = connectionMap
+		}
+
+	}
+	go handleMessagesPerChanel(chatroom, chatroom_name)
+
+		room_list_in_json, err := json.Marshal(chatroom_singledton.GetAllChanelNames());
+		if (err == nil) {
+			room_list_msg := Message{Action: "result", Type: "rooms", Message: string(room_list_in_json)}
+
+			for conn, _ := range all_client_map {
+				notifyClient(conn, room_list_msg)
+			}
+		}
+
+	return chatroom, true
+}
+func createPublicChatroom(){
+
+	createChatRoom(PUBLICROOM)
+}
+func getChatroombyConn(ws *websocket.Conn) (chan Message, string , bool) {
+
+	for channelName, socketMaps := range chatroom_client_singleton{
+		_, ok := socketMaps[ws]
+		if(ok){
+
+			chanel, _ :=  chatroom_singledton.Get(channelName)
+			return chanel,channelName, true
+		}
+
+	}
+	return nil,"", false
+}
+
+func joinChatroom(conn *websocket.Conn, room string ){
+
+	_, ok := (&chatroom_singledton).Get(room)
+	if (ok) { // there exists a chatroom
+
+		chatroom_client_map, ok := chatroom_client_singleton[room]
+
+		if (ok) { // there exists a map for that room
+			chatroom_client_map[conn] = true
+
+			// these handlers are copy pasted from the get requests. will need to rewrite
+
+			_, chatroom, _ := getChatroombyConn(conn)
+			msg := Message{Action:"result", Type:"current_room", Message: string(chatroom)}
+			notifyClient(conn, msg)
+
+
+			users:=GetAllUsersInRoom(chatroom);
+			users_list_in_json, err := json.Marshal(users);
+
+			if(err==nil){
+				user_list_msg := Message{Action:"result", Type:"users", Message: string(users_list_in_json)}
+
+				notifyClient(conn, user_list_msg)
+
+			}
+
+		}
+		// else the room doesn't exist, which shouldn't happen, handle
+	}
+	//todo handle exception, the room doesn't exist
+
+	//todo maybe notify the rest , someone has joined?
 }
 
 func handleConnections(w http.ResponseWriter, r *http.Request) {
@@ -120,87 +218,72 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if msg.Action == "create" {
-			chatroom := make(chan Message)
-			(&chatroom_singledton).Set(msg.Chatroom, chatroom)
 
-			room_list_in_json, err := json.Marshal(chatroom_singledton.GetAllChanelNames());
+			createChatRoom(msg.Chatroom)
 
-			if(err==nil){
-				room_list_msg := Message{Action:"result", Type:"rooms", Message: string(room_list_in_json)}
+		} else if msg.Action == "change_cred" {
 
-				for conn, _ := range all_client_map{
+			usr_ptr := all_client_map[ws]
+			(*usr_ptr).Email = msg.Email
+			(*usr_ptr).Name = msg.Username
 
-				go notifyClient(conn, room_list_msg)
+		} else  if msg.Action == "user_entry"{
 
+			usr_ptr := all_client_map[ws]
+			(*usr_ptr).Email = msg.Email
+			(*usr_ptr).Name = msg.Username
 
-				}}
-
-			go handleMessagesPerChanel(chatroom)
-			// todo maybe after the user has created the room, force user to join the created room.
-
-
+			joinChatroom(ws,PUBLICROOM)
 
 
 		} else if msg.Action == "join" {
 
-			_, ok := (&chatroom_singledton).Get(msg.Chatroom)
-			if (ok) { // there exists a chatroom
-
-				chatroom_client_map, ok := chatroom_client_singleton[msg.Chatroom]
-
-				if (!ok) { // there exists a map for that room
-
-					connectionMap := make(map[*websocket.Conn]bool)
-					chatroom_client_singleton[msg.Chatroom] = connectionMap
-					chatroom_client_map = connectionMap
-				}
-
-				user,_ := all_client_map[ws]
-				(*user).email = msg.Email
-				(*user).name = msg.Username
-				chatroom_client_map[ws] = true
+			joinChatroom(ws,msg.Chatroom)
 
 
-			}
-
-			//todo maybe notify the rest , someone has joined?
 
 		} else if msg.Action == "message" {
+			// instead of client sending which room they want to send the msg to, it should be determined serverside
 
-			chatroom, ok := (&chatroom_singledton).Get(msg.Chatroom)
+
+			chatroom, _, ok := getChatroombyConn(ws)
 
 			if (ok) {
 				chatroom <- msg
-
 			}
 			// else the chat room doesn't exist
 		} else if msg.Action == "get" {
 			// this is global action, so it will just return back a list
-			if msg.Type == "rooms"{ //todo this could be cached.
-
+			if msg.Type == "rooms" { //todo this could be cached.
 
 				room_list_in_json, err := json.Marshal(chatroom_singledton.GetAllChanelNames());
-
-				if(err==nil){
-					room_list_msg := Message{Action:"result", Type:"rooms", Message: string(room_list_in_json)}
+				if (err == nil) {
+					room_list_msg := Message{Action: "result", Type: "rooms", Message: string(room_list_in_json)}
 
 					//for _, rooms_dict := range chatroom_client_singleton{
 					//	for conn, _ := range rooms_dict{
-							go notifyClient(ws, room_list_msg)
+					notifyClient(ws, room_list_msg)
 
-						//}
+					//}
 					//}
 				}
 
+			}else if msg.Type == "current_room" {
+
+				_, chatroom, _ := getChatroombyConn(ws)
+				msg := Message{Action:"result", Type:"current_room", Message: string(chatroom)}
+				notifyClient(ws, msg)
 
 			} else if msg.Type == "users" { // when client asks for users. or have server push user upon user joining? when user join, server needs to broadcast user to those in that room, so it's server side pushing info
 
-				users_list_in_json, err := json.Marshal(GetAllUsersInRoom(msg.Chatroom));
+				_, chatroom, _ := getChatroombyConn(ws)
+				users:=GetAllUsersInRoom(chatroom);
+				users_list_in_json, err := json.Marshal(users);
 
 				if(err==nil){
 					user_list_msg := Message{Action:"result", Type:"users", Message: string(users_list_in_json)}
 
-					go notifyClient(ws, user_list_msg)
+					notifyClient(ws, user_list_msg)
 
 				}
 
@@ -261,19 +344,19 @@ func deleteClientWSConn(conn *websocket.Conn) {
 	delete(all_client_map,conn)
 }
 
-func handleMessagesPerChanel(msgchan chan Message) {
+func handleMessagesPerChanel(msgchan chan Message, chatroom_name string) {
 
 	for {
 		msg := <-msgchan
 
-		room := msg.Chatroom
+		room := chatroom_name
 
 		clients, ok := chatroom_client_singleton[room]
 		if (ok) {
 
 			for client, _ := range clients {
 
-				go notifyClient(client,msg)
+				notifyClient(client,msg)
 
 			}
 

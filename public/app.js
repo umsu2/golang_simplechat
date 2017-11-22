@@ -13,7 +13,6 @@ new Vue({
             username: null,
             ChatroomName: null,
             currentChatroom: "",
-            joined: false,
 
         },
 
@@ -25,6 +24,7 @@ new Vue({
 
             self.ws.addEventListener('open', function () {
 
+                // once socket is open, grab the initial list of rooms
                 self.ws.send(
                     JSON.stringify({
 
@@ -32,6 +32,9 @@ new Vue({
                         type: "rooms",
 
                     }));
+
+
+
             });
 
             this.ws.addEventListener('message', function (e) {
@@ -55,6 +58,14 @@ new Vue({
 
                         chatrooms = JSON.parse(msg.message);
                         self.chatRooms = chatrooms
+                    }
+                    else if( msg.type === "current_room"){
+                        chatroom = msg.message;
+                        self.currentChatroom = chatroom
+                    }
+                    else if( msg.type === "users"){
+                        users =  JSON.parse(msg.message);
+                        self.usersinCurrentRoom = users;
                     }
 
                 }
@@ -82,7 +93,7 @@ new Vue({
                 }
             },
 
-            join: function () {
+            user_entry: function() {
 
                 if (!this.email) {
                     Materialize.toast('You must enter an email', 2000);
@@ -92,23 +103,50 @@ new Vue({
                     Materialize.toast('You must choose a username', 2000);
                     return
                 }
-                if (!this.currentChatroom) {
-                    Materialize.toast('You must join a chatroom', 2000);
-                    return
-                }
-
                 this.email = $('<p>').html(this.email).text();
                 this.username = $('<p>').html(this.username).text();
 
                 this.ws.send(
                     JSON.stringify({
-                        action : 'join',
-                        chatroom : this.currentChatroom,
+                        email: this.email,
+                        username: this.username,
+                        action : 'user_entry'
+                    }));
+
+                this.ws.send(
+                    JSON.stringify({
+
+                        action: "get",
+                        type: "current_room",
 
                     }));
 
 
-                this.joined = true;
+                this.ws.send(
+                    JSON.stringify({
+
+                        action: "get",
+                        type: "users",
+
+                    }));
+
+                $("#autojoinmodal").modal('close');
+            },
+
+            join: function (room_name) {
+
+
+
+                this.ws.send(
+                    JSON.stringify({
+                        action : 'join',
+                        chatroom : room_name,
+
+                    }));
+                Materialize.toast('You joined the room: ' + room_name, 2000);
+
+
+
             },
 
             createChatroom: function () {
