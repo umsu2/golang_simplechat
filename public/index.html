@@ -40,26 +40,33 @@
 
 
         <div class="col s4">
-            <div class="card horizontal">
+            <h6> click on a chat room below to join</h6>
+
+
 
                 <!--<div id="chat-rooms" class="card-content chat-messages" v-html="chatRoomContent">-->
 
 
                 <!--</div>-->
-                <div>
-
-                    <ul>
-
-                        <li v-for="chatroom in chatRooms">
 
 
-                            <a href="#" v-on:click="join(chatroom)">{{ chatroom }} </a>
 
-                        </li>
+            <div class="collection">
+                <a v-for="chatroom in chatRooms" v-on:click="join(chatroom)" href="#!" class="collection-item" v-bind:class="{ active: chatroom===currentChatroom }">    {{ chatroom }}</a>
 
-                    </ul>
-                </div>
             </div>
+
+                    <!--<ul class="collection">-->
+
+                        <!--<li v-on:click="join(chatroom)" class="collection-item" v-for="chatroom in chatRooms">-->
+
+
+                          <!--{{ chatroom }}-->
+
+                        <!--</li>-->
+
+                    <!--</ul>-->
+
 
             <button class="waves-effect waves-light btn"  @click="opencreateChatroommodal()">Create New Chatroom</button>
 
