@@ -2,6 +2,12 @@
 creating a simple chat app through golang
 
 
+how to run the app:
+- install docker, docker-compose
+- `docker-compose build`
+- `docker-compose up`
+- goto localhost
+
 
 how to setup dev environment:
 
