@@ -1,6 +1,6 @@
 
 
-new Vue({
+var vm = new Vue({
 
         el: '#app',
 
@@ -105,7 +105,7 @@ new Vue({
 
             send: function () {
                 // if (this.newMsg != '' ) {
-                var chatTxtBoxText = $(".chatmessagearea").val();
+                var chatTxtBoxText = $(".chatmessagearea")[0].emojioneArea.getText('');
                 if ( chatTxtBoxText != ''  ) {
                     this.ws.send(
                         JSON.stringify({

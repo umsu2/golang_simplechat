@@ -32,6 +32,7 @@ functionalities:
 - [x] nginx ws no socket timeout
 - [ ] when user joins they see previous n (5?) chat msg if available
 - [ ] some db logging
+- [ ] secure, wss and https on nginx
 
 deployment:
 - [ ] git commit triggers build.

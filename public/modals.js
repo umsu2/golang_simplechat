@@ -16,7 +16,26 @@ $( function() {
 
     $(".chatmessagearea").emojioneArea({
         pickerPosition: "bottom",
-        tonesStyle: "bullet"
+        tonesStyle: "bullet",
+        events: {
+            keyup: function(editor, event) {
+                // catches everything but enter
+                if (event.which == 13) {
+                    
+                    vm.send();
+
+
+
+
+                } else {
+
+                }
+            }
+
+        },
+
     });
+
+
 });
 
