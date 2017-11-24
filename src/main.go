@@ -86,6 +86,7 @@ func main() {
 
 	//fs := http.FileServer(http.Dir("../public"))
 	//http.Handle("/",fs)
+
 	http.HandleFunc("/", handleConnections)
 	//go handleMessages()
 	log.Println("websocket server started on :8080")
@@ -167,24 +168,70 @@ func joinChatroom(conn *websocket.Conn, room string ){
 		chatroom_client_map, ok := chatroom_client_singleton[room]
 
 		if (ok) { // there exists a map for that room
-			chatroom_client_map[conn] = true
+
+			_, prev_chatroom, _ := getChatroombyConn(conn) // get the previous room
+
+			delete(chatroom_client_singleton[prev_chatroom], conn) // delete previous
+			chatroom_client_map[conn] = true // set the current.
 
 			// these handlers are copy pasted from the get requests. will need to rewrite
 
-			_, chatroom, _ := getChatroombyConn(conn)
-			msg := Message{Action:"result", Type:"current_room", Message: string(chatroom)}
+
+			msg := Message{Action:"result", Type:"current_room", Message: string(room)}
 			notifyClient(conn, msg)
 
 
-			users:=GetAllUsersInRoom(chatroom);
+
+
+			//notify the previous chat room of user leaving
+			prev_clients := chatroom_client_singleton[prev_chatroom]
+
+
+			prev_users:=GetAllUsersInRoom(prev_chatroom);
+			prev_users_list_in_json, err := json.Marshal(prev_users);
+
+			user := *(all_client_map[conn])
+
+
+			leaving_msg := Message{Action:"message", Message: user.Name + " Has Left this room - " + prev_chatroom + " :frowning:", Username: "Admin" }
+			if(err==nil){
+
+				prev_user_list_msg := Message{Action:"result", Type:"users", Message: string(prev_users_list_in_json)}
+
+				for client := range prev_clients{
+
+					notifyClient(client, prev_user_list_msg)
+					notifyClient(client, leaving_msg)
+				}
+				}
+			// notify the current chat room of user joining
+			current_clients := chatroom_client_singleton[room]
+
+
+
+			joining_msg := Message{Action:"message", Message: user.Name + " Has joined this room - " + room +  " :relaxed:", Username: "Admin" }
+			users:=GetAllUsersInRoom(room);
 			users_list_in_json, err := json.Marshal(users);
 
 			if(err==nil){
 				user_list_msg := Message{Action:"result", Type:"users", Message: string(users_list_in_json)}
 
-				notifyClient(conn, user_list_msg)
+				for client := range current_clients{
+
+					notifyClient(client, user_list_msg)
+					notifyClient(client, joining_msg)
+
+				}
+
+
 
 			}
+
+
+
+
+
+			//todo also notify the prev room users that the users has left.
 
 		}
 		// else the room doesn't exist, which shouldn't happen, handle

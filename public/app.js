@@ -1,3 +1,5 @@
+
+
 new Vue({
 
         el: '#app',
@@ -5,7 +7,7 @@ new Vue({
         data: {
 
             ws: null,
-            newMsg: '',
+            // newMsg: '',
             chatContent: '',
             chatRooms: [],
             usersinCurrentRoom: ["None"],
@@ -13,6 +15,7 @@ new Vue({
             username: null,
             ChatroomName: null,
             currentChatroom: "",
+            modaltype: "connect",
 
         },
 
@@ -34,6 +37,27 @@ new Vue({
                     }));
 
 
+
+            });
+
+            this.ws.addEventListener('close', function (e) {
+
+                self.modaltype = "disconnect";
+
+                $('#autojoinmodal').modal({
+                        dismissible: false, // Modal can be dismissed by clicking outside of the modal
+                        complete: function() {
+
+                            location.reload();
+
+                        },
+                        ready: function(modal, trigger) { // Callback for Modal open. Modal and trigger parameters available.
+                            console.log(modal, trigger);
+
+                        },
+                    }
+                );
+                $('#autojoinmodal').modal('open');
 
             });
 
@@ -80,16 +104,20 @@ new Vue({
         methods: {
 
             send: function () {
-                if (this.newMsg != '') {
+                // if (this.newMsg != '' ) {
+                var chatTxtBoxText = $(".chatmessagearea").val();
+                if ( chatTxtBoxText != ''  ) {
                     this.ws.send(
                         JSON.stringify({
                             email: this.email,
                             action: "message",
                             username: this.username,
                             chatroom: this.currentChatroom,
-                            message: $('<p>').html(this.newMsg).text()
+                            message: $('<p>').html(chatTxtBoxText).text()
                         }));
-                    this.newMsg = '';
+
+                    $(".chatmessagearea")[0].emojioneArea.setText('');
+                    // this.newMsg = '';
                 }
             },
 
@@ -149,6 +177,13 @@ new Vue({
 
             },
 
+            opencreateChatroommodal: function(){
+
+                this.modaltype = "createchatroom";
+                $("#autojoinmodal").modal('open');
+
+            },
+
             createChatroom: function () {
 
                 var chatroomName = $('<p>').html(this.ChatroomName).text();
@@ -165,7 +200,7 @@ new Vue({
                         }));
                 this.ChatroomName = '';
                 Materialize.toast(`You created a chatroom called: '${chatroomName}'`, 2000);
-
+                $("#autojoinmodal").modal('close');
 
 
 
