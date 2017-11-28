@@ -1,7 +1,6 @@
 # golang_simplechat
 creating a simple chat app through golang
 
-
 view demo at:
 
 www.rubberducklings.com
@@ -21,8 +20,6 @@ how to setup dev environment:
 - or just overwrite local `nginx.conf` with `nginx.conf` 
 
 
-
-
 #todos
 
 functionalities:
@@ -31,14 +28,15 @@ functionalities:
 - [x] easier emoji access, user can see all available emojis
 - [x] user joins or leaves a room, msg will broadcast to the users in the room
 - [x] a user list, where the chatroom shows who is inside the room
-- [ ] private msg between users
+- [ ] ~~Private msg between users~~ future release
 - [x] once ws timeouts, indicate timeout and button to reconnect
 - [x] nginx ws no socket timeout
-- [ ] when user joins they see previous n (5?) chat msg if available
-- [ ] some db logging
-- [ ] secure, wss and https on nginx
+- [ ] ~~when user joins they see previous n (5?) chat msg if available~~ future release
+- [ ] add debugging logs
+- [ ] some chat logging into db
+- [x] secure, wss and https on nginx
 
-deployment:
+deployment: -might do in the future
 - [ ] git commit triggers build.
 - [ ] auto deployment. 
 
