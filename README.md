@@ -22,7 +22,7 @@ how to setup dev environment:
 
 #todos
 
-functionalities:
+functionalities v1.0:
 - [x] users can switch chat rooms
 - [ ] ~~if last user leaves a chatroom, it will disappear, except for public room~~
 - [x] easier emoji access, user can see all available emojis
