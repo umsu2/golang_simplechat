@@ -23,8 +23,12 @@ var vm = new Vue({
 
             var self = this;
 
-            self.ws = new WebSocket(`ws://${window.location.hostname}/ws`);
-
+            if(window.location.hostname === "localhost"){
+                self.ws = new WebSocket(`ws://${window.location.hostname}/ws`);
+            }else{
+                self.ws = new WebSocket(`wss://${window.location.hostname}/ws`);
+            }
+            
             self.ws.addEventListener('open', function () {
 
                 // once socket is open, grab the initial list of rooms

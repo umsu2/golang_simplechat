@@ -2,7 +2,11 @@
 creating a simple chat app through golang
 
 
-how to run the app:
+view demo at:
+
+www.rubberducklings.com
+
+how to run the app locally:
 - install docker, docker-compose
 - `docker-compose build`
 - `docker-compose up`
@@ -23,7 +27,7 @@ how to setup dev environment:
 
 functionalities:
 - [x] users can switch chat rooms
-- [ ] if last user leaves a chatroom, it will disappear, except for public room
+- [ ] ~~if last user leaves a chatroom, it will disappear, except for public room~~
 - [x] easier emoji access, user can see all available emojis
 - [x] user joins or leaves a room, msg will broadcast to the users in the room
 - [x] a user list, where the chatroom shows who is inside the room
